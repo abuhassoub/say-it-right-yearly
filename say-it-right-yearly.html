@@ -1,0 +1,1076 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>*,*::before,*::after{box-sizing:border-box}html,body{margin:0}[hidden]{display:none!important}</style></head><body><title>Say It Right</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Noto+Sans:wght@400;600&display=swap">
+<style>
+/* Layout: header with accent and language switches, three tabs.
+   Sounds tab = grid of sound pairs above one practice panel of word cards.
+   British vs American tab = one row per word with both IPA forms side by side. */
+:root{
+  --ui:'Cairo','Segoe UI',Tahoma,'Noto Sans Arabic',sans-serif;
+  --ipa:'Noto Sans','Charis SIL','Doulos SIL','Segoe UI','DejaVu Sans',sans-serif;
+  --bg:#F4F6F9; --surface:#FFFFFF; --surface-2:#EAEFF6; --ink:#14213D; --muted:#4B5870; --line:#D3DBE6;
+  --accent:#0B6E79; --on-accent:#FFFFFF;
+  --uk:#2B4C9B; --on-uk:#FFFFFF; --us:#A84A06; --on-us:#FFFFFF;
+  --good:#17683F; --warn:#8F4400; --bad:#B3261E; --bad-solid:#B3261E; --on-bad:#FFFFFF;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1623; --surface:#172033; --surface-2:#1F2A41; --ink:#E8EDF7; --muted:#A9B5CB; --line:#2C3956;
+    --accent:#4FC3CF; --on-accent:#08222A;
+    --uk:#9DB3F7; --on-uk:#0F1623; --us:#F4AA62; --on-us:#0F1623;
+    --good:#6FD7A3; --warn:#F4AA62; --bad:#FF9C94; --bad-solid:#C2352C; --on-bad:#FFFFFF;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1623; --surface:#172033; --surface-2:#1F2A41; --ink:#E8EDF7; --muted:#A9B5CB; --line:#2C3956;
+  --accent:#4FC3CF; --on-accent:#08222A;
+  --uk:#9DB3F7; --on-uk:#0F1623; --us:#F4AA62; --on-us:#0F1623;
+  --good:#6FD7A3; --warn:#F4AA62; --bad:#FF9C94; --bad-solid:#C2352C; --on-bad:#FFFFFF;
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:16px;line-height:1.6}
+.wrap{max-width:980px;margin:0 auto;padding-block:20px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.app[data-accent="uk"]{--acc:var(--uk);--on-acc:var(--on-uk)}
+.app[data-accent="us"]{--acc:var(--us);--on-acc:var(--on-us)}
+button{font:inherit;color:inherit}
+button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.top{display:flex;flex-wrap:wrap;gap:14px 24px;align-items:center;justify-content:space-between}
+.brand{min-width:0;flex:1 1 280px}
+.brand h1{margin:0;font-size:28px;line-height:1.25;font-weight:700;text-wrap:balance}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:15px}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:3px;gap:2px}
+.seg button{min-height:44px;padding:0 16px;border:0;border-radius:9px;background:transparent;font-weight:600;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
+.seg button[data-v="uk"][aria-pressed="true"]{background:var(--uk);color:var(--on-uk)}
+.seg button[data-v="us"][aria-pressed="true"]{background:var(--us);color:var(--on-us)}
+.langbtn{min-height:44px;padding:0 16px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-weight:600;cursor:pointer}
+.voices{margin:12px 0 0;font-size:13.5px;color:var(--muted)}
+.voices.warn{color:var(--warn)}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-top:18px;overflow-x:auto}
+.tab{min-height:48px;padding:0 16px;background:none;border:0;border-bottom:3px solid transparent;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+
+.hint{margin:16px 0 0;color:var(--muted);font-size:15px}
+.sets{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;margin-top:10px}
+.set{min-height:64px;padding:8px 6px;border:1px solid var(--line);border-radius:12px;background:var(--surface);text-align:center;cursor:pointer;display:flex;flex-direction:column;justify-content:center;gap:0}
+.set .sym{font-family:var(--ipa);font-size:20px;font-weight:600;direction:ltr;unicode-bidi:isolate;line-height:1.3}
+.set .lab{font-size:12.5px;color:var(--muted);direction:ltr;unicode-bidi:isolate}
+.set[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
+
+.panel{margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;display:grid;gap:18px}
+.panel h2{margin:0;font-size:22px;line-height:1.3;text-wrap:balance}
+.facts{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
+.fact{background:var(--surface-2);border-radius:12px;padding:12px 14px;min-width:0}
+.fact h3{margin:0 0 4px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.fact p{margin:0;font-size:15.5px}
+.banner{border:1px solid var(--warn);border-radius:12px;padding:12px 14px;color:var(--warn);font-size:15px;background:var(--surface)}
+.caveat{margin:0;font-size:13.5px;color:var(--muted)}
+
+.pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:10px}
+.card{background:var(--surface-2);border-radius:12px;padding:14px;min-width:0}
+.cardhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
+.w{font-family:var(--ipa);font-size:28px;font-weight:600;direction:ltr;unicode-bidi:isolate;line-height:1.3}
+.ipa{font-family:var(--ipa);font-size:18px;color:var(--acc);direction:ltr;unicode-bidi:isolate}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.btn{min-height:44px;min-width:44px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+.btn svg{flex:none}
+.btn.say{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.say.on{background:var(--bad-solid);border-color:var(--bad-solid);color:var(--on-bad)}
+.btn.say.on .dot{animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+@media (prefers-reduced-motion: reduce){.btn.say.on .dot{animation:none}}
+.status{margin-top:10px;min-height:1.6em;font-size:15px;display:flex;gap:8px;align-items:flex-start}
+.status:empty{min-height:0;margin-top:0}
+.micbar{margin-top:12px;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.micbar .btn{margin-inline-start:auto}
+.micbar .how{flex-basis:100%;font-size:15px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.micbar .how ol{margin:6px 0 0;padding-inline-start:22px}
+.micbar .how li{margin:2px 0}
+.groups{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.gbtn{min-height:44px;padding:0 16px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-weight:600;cursor:pointer}
+.gbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.ghead{margin:14px 0 -2px;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.status svg{flex:none;margin-top:3px}
+.status .q{font-family:var(--ipa);direction:ltr;unicode-bidi:isolate;font-weight:600}
+.status.good{color:var(--good)} .status.warn{color:var(--warn)} .status.bad{color:var(--bad)} .status.info{color:var(--muted)}
+
+.ablist{display:grid;gap:10px;margin-top:16px}
+.ab{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:10px}
+.ab .forms{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:8px}
+.form{background:var(--surface-2);border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}
+.form .tag{font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.form.uk .tag,.form.uk .ipa{color:var(--uk)} .form.us .tag,.form.us .ipa{color:var(--us)}
+.note{margin:0;font-size:15px;color:var(--muted)}
+
+.plist{display:grid;gap:10px;margin-top:16px}
+.prow{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:8px}
+.prow .head{display:flex;flex-wrap:wrap;gap:8px 14px;justify-content:space-between;align-items:center}
+.prow .name{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.bar{height:10px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:999px}
+.sum{margin:16px 0 0;font-size:16px}
+.reset{margin-top:16px}
+</style>
+
+<div class="wrap">
+  <div class="app" id="app" data-accent="uk"></div>
+</div>
+<input id="fileIn" type="file" accept="audio/*" capture hidden>
+
+<script>
+window.__startApp=function(){
+'use strict';
+
+/* ---------- Content ---------- */
+const W=(w,uk,us)=>({w:w,uk:uk,us:us||uk});
+
+const SETS=[
+{id:'pb',sym:'p · b',
+ title:{en:'/p/ and /b/',ar:'الصوتان /p/ و /b/'},
+ why:{en:'Arabic has no /p/, so it is often replaced by /b/ (pen sounds like ben).',
+      ar:'اللغة العربية ليس فيها صوت /p/، فيُنطق غالبًا /b/ (فتصير pen كأنها ben).'},
+ tip:{en:'/p/ is voiceless and aspirated: say it with a puff of air. Hold a tissue in front of your mouth; it should move for pat but hardly for bat. Touch your throat: /b/ vibrates, /p/ does not.',
+      ar:'صوت /p/ مهموس ويخرج معه نفَس قوي. ضع ورقة خفيفة أمام فمك، فيجب أن تتحرك مع pat ولا تكاد تتحرك مع bat. المس حنجرتك: صوت /b/ مجهور فتشعر باهتزاز، أما /p/ فلا اهتزاز فيه.'},
+ pairs:[[W('pat','pæt'),W('bat','bæt')],[W('pie','paɪ'),W('buy','baɪ')],[W('pack','pæk'),W('back','bæk')],
+        [W('rope','rəʊp','roʊp'),W('robe','rəʊb','roʊb')],[W('cap','kæp'),W('cab','kæb')]]},
+{id:'fv',sym:'f · v',
+ title:{en:'/f/ and /v/',ar:'الصوتان /f/ و /v/'},
+ why:{en:'Arabic has /f/ but no /v/, so /v/ is often replaced by /f/ (very sounds like ferry).',
+      ar:'في العربية صوت /f/ ولا يوجد /v/، فيُنطق /v/ غالبًا /f/ (فتصير very كأنها ferry).'},
+ tip:{en:'For /v/, touch your upper teeth to your lower lip as for /f/, but switch your voice on. You should feel a buzz on your lip.',
+      ar:'عند نطق /v/ ضع أسنانك العليا على الشفة السفلى كما في /f/، لكن شغّل الصوت. يجب أن تشعر بطنين على شفتك.'},
+ pairs:[[W('fan','fæn'),W('van','væn')],[W('feel','fiːl'),W('veal','viːl')],[W('safe','seɪf'),W('save','seɪv')],
+        [W('leaf','liːf'),W('leave','liːv')],[W('ferry','ˈferi'),W('very','ˈveri')]]},
+{id:'ii',sym:'ɪ · iː',
+ title:{en:'/ɪ/ and /iː/',ar:'الصوتان /ɪ/ و /iː/'},
+ why:{en:'In Arabic, short and long vowels differ only in length. English /ɪ/ and /iː/ differ in length and in quality, so learners often use one vowel for both (ship sounds like sheep).',
+      ar:'في العربية يختلف الصوت القصير عن الطويل في المدة فقط. أما /ɪ/ و/iː/ في الإنجليزية فيختلفان في المدة وفي الجودة، فيستعمل المتعلمون صوتًا واحدًا لهما (فتصير ship كأنها sheep).'},
+ tip:{en:'/ɪ/ is short and relaxed: the tongue is lower and the lips are loose. /iː/ is longer and tenser, with the lips spread as in a smile.',
+      ar:'صوت /ɪ/ قصير ومسترخٍ، واللسان أخفض والشفتان مرتخيتان. أما /iː/ فأطول وأشد توترًا، والشفتان ممدودتان كالابتسامة.'},
+ pairs:[[W('ship','ʃɪp'),W('sheep','ʃiːp')],[W('sit','sɪt'),W('seat','siːt')],[W('live','lɪv'),W('leave','liːv')],
+        [W('bit','bɪt'),W('beat','biːt')],[W('fill','fɪl'),W('feel','fiːl')]]},
+{id:'ae',sym:'æ · e',
+ title:{en:'/æ/ and /e/',ar:'الصوتان /æ/ و /e/'},
+ why:{en:'Many Arabic speakers merge /æ/ and /e/ (bad sounds like bed).',
+      ar:'يخلط كثير من المتحدثين بالعربية بين /æ/ و/e/ (فتصير bad كأنها bed).'},
+ tip:{en:'For /æ/ open your mouth wide and lower your jaw; for /e/ the mouth is more closed. Look in a mirror: the gap between your teeth should be bigger for bad than for bed.',
+      ar:'في /æ/ افتح فمك واسعًا واخفض فكّك، وفي /e/ يكون الفم أقل انفتاحًا. انظر في مرآة: يجب أن تكون المسافة بين أسنانك في bad أكبر منها في bed.'},
+ pairs:[[W('bad','bæd'),W('bed','bed')],[W('man','mæn'),W('men','men')],[W('pan','pæn'),W('pen','pen')],[W('sat','sæt'),W('set','set')]]},
+{id:'ua',sym:'ʌ · æ',
+ title:{en:'/ʌ/ and /æ/',ar:'الصوتان /ʌ/ و /æ/'},
+ why:{en:'/ʌ/ does not exist in Arabic and is often replaced by /a/ or /æ/ (cup sounds like cap).',
+      ar:'صوت /ʌ/ غير موجود في العربية، فيُبدَّل غالبًا بـ /a/ أو /æ/ (فتصير cup كأنها cap).'},
+ tip:{en:'/ʌ/ is short and relaxed and comes from the middle of the mouth. Do not open your jaw wide as you do for /æ/.',
+      ar:'صوت /ʌ/ قصير ومرتخٍ، يخرج من وسط الفم. لا تفتح فكّك واسعًا كما تفعل في /æ/.'},
+ pairs:[[W('cup','kʌp'),W('cap','kæp')],[W('luck','lʌk'),W('lack','læk')],[W('hut','hʌt'),W('hat','hæt')],[W('cut','kʌt'),W('cat','kæt')]]},
+{id:'th',sym:'θ · ð',
+ title:{en:'The “th” sounds',ar:'صوتا “th”'},
+ why:{en:'Standard Arabic has these sounds (ث and ذ), but in everyday speech many Arabic speakers replace them with /s/, /t/, /z/ or /d/. Then think sounds like sink or tink.',
+      ar:'للعربية الفصحى هذان الصوتان (ث وذ)، لكن في الكلام اليومي يُبدلهما كثيرون بـ /s/ و/t/ و/z/ و/d/، فتصير think كأنها sink أو tink.'},
+ tip:{en:'Put the tip of your tongue lightly between your teeth and let the air flow. /θ/ is the sound of ث, and /ð/ is the sound of ذ. Do not press the tongue (that gives /t/ or /d/) and do not pull it back (that gives /s/ or /z/).',
+      ar:'ضع طرف لسانك بين أسنانك برفق ودع الهواء يمر. /θ/ هو صوت ث، و/ð/ هو صوت ذ. لا تضغط اللسان (فيصير /t/ أو /d/) ولا تسحبه إلى الخلف (فيصير /s/ أو /z/).'},
+ pairs:[[W('think','θɪŋk'),W('sink','sɪŋk')],[W('three','θriː'),W('tree','triː')],[W('thank','θæŋk'),W('tank','tæŋk')],
+        [W('then','ðen'),W('den','den')],[W('breathe','briːð'),W('breeze','briːz')],[W('mouth','maʊθ'),W('mouse','maʊs')]]},
+{id:'rl',sym:'r · l',
+ title:{en:'/r/ and /l/',ar:'الصوتان /r/ و /l/'},
+ why:{en:'Arabic ر is a tap or a trill. English /r/ is smooth and the tongue touches nothing. Some learners also blur /r/ and /l/.',
+      ar:'الراء العربية نقرة أو تكرار للسان. أما /r/ الإنجليزي فسلس ولا يلمس اللسان فيه شيئًا. ويخلط بعض المتعلمين بين /r/ و/l/.'},
+ tip:{en:'For /r/, curl the tip of the tongue back without touching the roof of the mouth, round your lips slightly, and do not roll it. For /l/, the tongue tip touches the ridge behind the upper teeth.',
+      ar:'في /r/ اعطف طرف اللسان إلى الخلف دون أن يلمس سقف الفم، وقرّب شفتيك قليلًا، ولا تكرّر الراء. وفي /l/ يلمس طرف اللسان اللثة خلف الأسنان العليا.'},
+ pairs:[[W('right','raɪt'),W('light','laɪt')],[W('red','red'),W('led','led')],[W('rice','raɪs'),W('lice','laɪs')],
+        [W('road','rəʊd','roʊd'),W('load','ləʊd','loʊd')],[W('rock','rɒk','rɑːk'),W('lock','lɒk','lɑːk')]]},
+{id:'ng',sym:'ŋ · n',
+ title:{en:'/ŋ/ and /n/',ar:'الصوتان /ŋ/ و /n/'},
+ why:{en:'Learners often say /n/ instead of /ŋ/ (sin for sing), or add a /g/ after it (sing-g).',
+      ar:'يقول المتعلمون غالبًا /n/ بدل /ŋ/ (sin بدل sing)، أو يضيفون /g/ بعده (sing-g).'},
+ tip:{en:'For /ŋ/ the back of the tongue touches the soft palate and the air goes through the nose. Stop at that sound and do not add a /g/.',
+      ar:'في /ŋ/ يلمس مؤخر اللسان الحنك الرخو ويخرج الهواء من الأنف. قف عند هذا الصوت ولا تضف /g/ بعده.'},
+ pairs:[[W('sing','sɪŋ'),W('sin','sɪn')],[W('thing','θɪŋ'),W('thin','θɪn')],[W('king','kɪŋ'),W('kin','kɪn')],[W('wing','wɪŋ'),W('win','wɪn')]]},
+{id:'wv',sym:'w · v',
+ title:{en:'/w/ and /v/',ar:'الصوتان /w/ و /v/'},
+ why:{en:'Arabic has /w/ (و) but no /v/, so learners may say /w/ or /f/ for /v/.',
+      ar:'للعربية صوت /w/ (و) ولا يوجد /v/، فقد يقول المتعلمون /w/ أو /f/ بدل /v/.'},
+ tip:{en:'For /w/, round your lips and keep your teeth away from them. For /v/, your upper teeth touch your lower lip.',
+      ar:'في /w/ استدِر بشفتيك وأبعد أسنانك عنهما. وفي /v/ تلمس أسنانك العليا شفتك السفلى.'},
+ pairs:[[W('west','west'),W('vest','vest')],[W('wine','waɪn'),W('vine','vaɪn')],[W('wet','wet'),W('vet','vet')],
+        [W('worse','wɜːs','wɝːs'),W('verse','vɜːs','vɝːs')]]},
+{id:'sh',sym:'ʃ · tʃ',
+ title:{en:'/ʃ/ and /tʃ/',ar:'الصوتان /ʃ/ و /tʃ/'},
+ why:{en:'Arabic has ش (/ʃ/) but /tʃ/ is not a regular sound of Standard Arabic, so chip may sound like ship.',
+      ar:'للعربية صوت ش (/ʃ/)، لكن /tʃ/ ليس صوتًا أصيلًا في الفصحى، فقد تصير chip كأنها ship.'},
+ tip:{en:'/tʃ/ starts with a stop, like /t/, and then releases into /ʃ/: “t” plus “sh” in one quick movement.',
+      ar:'يبدأ /tʃ/ بانحباس كالتاء ثم ينطلق إلى /ʃ/، أي «ت» ثم «ش» في حركة واحدة سريعة.'},
+ pairs:[[W('ship','ʃɪp'),W('chip','tʃɪp')],[W('sheep','ʃiːp'),W('cheap','tʃiːp')],[W('share','ʃeə','ʃer'),W('chair','tʃeə','tʃer')],[W('shin','ʃɪn'),W('chin','tʃɪn')]]},
+{id:'jg',sym:'dʒ · g',
+ title:{en:'/dʒ/ and /g/',ar:'الصوتان /dʒ/ و /g/'},
+ why:{en:'In Egyptian Arabic the letter ج is pronounced /g/, so /dʒ/ often becomes /g/ (jet sounds like get).',
+      ar:'في اللهجة المصرية يُنطق حرف الجيم /g/، فيصير /dʒ/ غالبًا /g/ (فتصير jet كأنها get).'},
+ tip:{en:'/dʒ/ is the voiced partner of /tʃ/: a stop that releases into /ʒ/. The front of the tongue touches the ridge behind the upper teeth, not the back of the tongue as for /g/.',
+      ar:'/dʒ/ هو المقابل المجهور لـ /tʃ/: انحباس ثم انطلاق إلى /ʒ/. يلمس مقدّم اللسان اللثة خلف الأسنان العليا، لا مؤخره كما في /g/.'},
+ pairs:[[W('jet','dʒet'),W('get','get')],[W('jail','dʒeɪl'),W('gale','geɪl')],[W('jeer','dʒɪə','dʒɪr'),W('gear','gɪə','gɪr')],[W('edge','edʒ'),W('egg','eg')]]},
+{id:'cl',sym:'sk · str',type:'words',
+ title:{en:'Consonant clusters',ar:'تجمّعات الأصوات الساكنة'},
+ why:{en:'Arabic words do not begin with two consonants, so learners add a vowel: school becomes iskool, plan becomes pilan.',
+      ar:'الكلمات العربية لا تبدأ بصامتين متتاليين، فيضيف المتعلمون حركة: تصير school كأنها iskool وplan كأنها pilan.'},
+ tip:{en:'Do not add a vowel before or inside the cluster. Say s-kool, not is-kool. Hold the /s/ and move straight to the next consonant.',
+      ar:'لا تضف حركة قبل التجمّع أو داخله. قل s-kool وليس is-kool. أبقِ /s/ مستمرًا وانتقل مباشرة إلى الصامت التالي.'},
+ words:[W('school','skuːl'),W('street','striːt'),W('spring','sprɪŋ'),W('speak','spiːk'),W('stop','stɒp','stɑːp'),
+        W('skin','skɪn'),W('plan','plæn'),W('blue','bluː'),W('clean','kliːn'),W('glass','glɑːs','glæs')]}
+];
+
+/* ---------- Remaining English sounds: every consonant, vowel and diphthong ---------- */
+SETS.push(
+{id:'td',sym:'t · d',
+ title:{en:'/t/ and /d/',ar:'الصوتان /t/ و /d/'},
+ why:{en:'Arabic has ت and د, so these are usually easy. The problems come at the end of a word, where /d/ may lose its voice (bed sounds like bet), and at the start, where /t/ needs a puff of air.',
+      ar:'للعربية التاء والدال، فهما سهلان غالبًا. تظهر المشكلة في آخر الكلمة حين يفقد /d/ جهره (فتصير bed كأنها bet)، وفي أولها حيث يحتاج /t/ إلى نفَس قوي.'},
+ tip:{en:'Touch the ridge behind your upper teeth, not the teeth themselves. /t/ is voiceless and starts with a puff of air; /d/ is voiced. At the end of a word keep the voice on for /d/ until the sound ends.',
+      ar:'المس اللثة خلف الأسنان العليا، لا الأسنان نفسها. صوت /t/ مهموس ويبدأ بنفَس قوي، و/d/ مجهور. في آخر الكلمة أبقِ الصوت مجهورًا في /d/ حتى ينتهي.'},
+ pairs:[[W('tie','taɪ'),W('die','daɪ')],[W('ten','ten'),W('den','den')],[W('time','taɪm'),W('dime','daɪm')],
+        [W('bet','bet'),W('bed','bed')],[W('seat','siːt'),W('seed','siːd')]]},
+{id:'kg',sym:'k · g',
+ title:{en:'/k/ and /g/',ar:'الصوتان /k/ و /g/'},
+ why:{en:'Standard Arabic has no /g/. Speakers of some dialects replace it with /k/ or /dʒ/ (goat sounds like coat). Egyptian speakers already have /g/ (the sound of ج), so the task is not to mix it up with /k/.',
+      ar:'ليس في الفصحى صوت /g/. ويُبدله متحدثو بعض اللهجات بـ /k/ أو /dʒ/ (فتصير goat كأنها coat). أما المصريون فعندهم /g/ (صوت الجيم)، فالمطلوب ألا يخلطوه بـ /k/.'},
+ tip:{en:'Both sounds are made with the back of the tongue against the soft palate. /k/ is voiceless with a puff of air; /g/ is voiced, so you feel a buzz in your throat. Do not say /k/ as ق from deep in the throat.',
+      ar:'يُنطق الصوتان بمؤخر اللسان على الحنك الرخو. /k/ مهموس مع نفَس قوي، و/g/ مجهور فتشعر باهتزاز في الحنجرة. لا تنطق /k/ قافًا من أعماق الحلق.'},
+ pairs:[[W('cap','kæp'),W('gap','gæp')],[W('back','bæk'),W('bag','bæg')],[W('coat','kəʊt','koʊt'),W('goat','gəʊt','goʊt')],
+        [W('cold','kəʊld','koʊld'),W('gold','gəʊld','goʊld')],[W('class','klɑːs','klæs'),W('glass','glɑːs','glæs')]]},
+{id:'sz',sym:'s · z',
+ title:{en:'/s/ and /z/',ar:'الصوتان /s/ و /z/'},
+ why:{en:'Arabic has س and ز, but learners often say /s/ for every plural or verb ending, and replace a final /z/ with /s/ (rise sounds like rice).',
+      ar:'للعربية س وز، لكن المتعلمين ينطقون /s/ في كل نهاية جمع أو فعل، ويبدّلون /z/ الأخيرة بـ /s/ (فتصير rise كأنها rice).'},
+ tip:{en:'The tongue is in the same place for both. Only the voice changes: put a hand on your throat; /z/ vibrates and /s/ does not. The vowel before a final /z/ is a little longer.',
+      ar:'اللسان في الموضع نفسه للصوتين، والفرق في الجهر فقط: ضع يدك على حنجرتك، يهتز /z/ ولا يهتز /s/. وتكون الحركة قبل /z/ الأخيرة أطول قليلًا.'},
+ pairs:[[W('sue','suː'),W('zoo','zuː')],[W('bus','bʌs'),W('buzz','bʌz')],[W('price','praɪs'),W('prize','praɪz')],
+        [W('rice','raɪs'),W('rise','raɪz')],[W('face','feɪs'),W('phase','feɪz')]]},
+{id:'zh',sym:'ʒ · ʃ',
+ title:{en:'/ʒ/ and /ʃ/',ar:'الصوتان /ʒ/ و /ʃ/'},
+ why:{en:'/ʒ/ is rare in Arabic and appears mostly in borrowed words. Learners often replace it with /ʃ/ or /dʒ/ (vision sounds like mission).',
+      ar:'صوت /ʒ/ نادر في العربية ويظهر غالبًا في الكلمات المقترضة. فيُبدله المتعلمون بـ /ʃ/ أو /dʒ/ (فتصير vision كأنها mission).'},
+ tip:{en:'/ʒ/ is the voiced partner of /ʃ/ (the sound of ش). Put your tongue as for ش and switch your voice on. It is a smooth sound, with no /d/ at the start.',
+      ar:'/ʒ/ هو المقابل المجهور لـ /ʃ/ (صوت ش). ضع لسانك كما في ش وشغّل الصوت. هو صوت سلس لا يبدأ بدال.'},
+ pairs:[[W('pleasure','ˈpleʒə','ˈpleʒɚ'),W('pressure','ˈpreʃə','ˈpreʃɚ')],[W('vision','ˈvɪʒn'),W('mission','ˈmɪʃn')],
+        [W('measure','ˈmeʒə','ˈmeʒɚ'),W('major','ˈmeɪdʒə','ˈmeɪdʒɚ')],[W('beige','beɪʒ'),W('badge','bædʒ')]]},
+{id:'jy',sym:'j · dʒ',
+ title:{en:'/j/ (as in yes) and /dʒ/',ar:'الصوتان /j/ (كما في yes) و /dʒ/'},
+ why:{en:'The letter y at the start of a word (yes) is the sound /j/, like Arabic ي. Some learners replace it with /dʒ/, or drop it: yes sounds like jess.',
+      ar:'حرف y في أول الكلمة (yes) هو الصوت /j/ مثل الياء العربية. ويُبدله بعض المتعلمين بـ /dʒ/ أو يحذفونه: فتصير yes كأنها jess.'},
+ tip:{en:'Start with the tongue high and close to the roof of the mouth, as for ي, then glide quickly into the next vowel. Do not stop the air; that would make /dʒ/.',
+      ar:'ابدأ بلسان مرتفع قريب من سقف الفم كما في الياء، ثم انزلق سريعًا إلى الحركة التالية. لا تحبس الهواء، فهذا يجعله /dʒ/.'},
+ pairs:[[W('yet','jet'),W('jet','dʒet')],[W('year','jɪə','jɪr'),W('jeer','dʒɪə','dʒɪr')],[W('yellow','ˈjeləʊ','ˈjeloʊ'),W('jello','ˈdʒeləʊ','ˈdʒeloʊ')],
+        [W('use','juːs'),W('juice','dʒuːs')],[W('yam','jæm'),W('jam','dʒæm')]]},
+{id:'hh',sym:'h',
+ title:{en:'/h/',ar:'الصوت /h/'},
+ why:{en:'Arabic has ه and ح, but English /h/ is a light breath with no friction in the throat. Learners may use the rough ح, or drop /h/ at the start of a word (hair sounds like air).',
+      ar:'للعربية ه وح، لكن /h/ الإنجليزي نفَس خفيف بلا احتكاك في الحلق. فقد يستعمل المتعلمون الحاء الخشنة، أو يحذفون /h/ في أول الكلمة (فتصير hair كأنها air).'},
+ tip:{en:'Breathe out softly, as if you were fogging a mirror, and let the next vowel follow at once. The throat stays relaxed: it is the Arabic ه, not ح.',
+      ar:'ازفر بلطف كأنك تُبخّر مرآة، ودع الحركة التالية تأتي فورًا. يبقى الحلق مسترخيًا: هو الهاء العربية وليس الحاء.'},
+ pairs:[[W('hat','hæt'),W('at','æt')],[W('heat','hiːt'),W('eat','iːt')],[W('hair','heə','her'),W('air','eə','er')],
+        [W('hall','hɔːl'),W('all','ɔːl')],[W('his','hɪz'),W('is','ɪz')],[W('hold','həʊld','hoʊld'),W('old','əʊld','oʊld')]]},
+{id:'mn',sym:'m · n',
+ title:{en:'/m/ and /n/',ar:'الصوتان /m/ و /n/'},
+ why:{en:'Both sounds exist in Arabic, so they are easy in themselves. The risk is at the end of a word, where /m/ may turn into /n/ (some sounds like sun).',
+      ar:'الصوتان موجودان في العربية فهما سهلان في ذاتهما. تظهر المشكلة في آخر الكلمة حين يتحوّل /m/ إلى /n/ (فتصير some كأنها sun).'},
+ tip:{en:'For /m/ close your lips and keep them closed until the sound ends. For /n/ the tongue tip touches the ridge behind the upper teeth and the lips stay open. Check in a mirror.',
+      ar:'في /m/ أغلق شفتيك وابقِهما مغلقتين حتى ينتهي الصوت. وفي /n/ يلمس طرف اللسان اللثة خلف الأسنان العليا وتبقى الشفتان مفتوحتين. تحقق في المرآة.'},
+ pairs:[[W('map','mæp'),W('nap','næp')],[W('mice','maɪs'),W('nice','naɪs')],[W('some','sʌm'),W('sun','sʌn')],
+        [W('rum','rʌm'),W('run','rʌn')],[W('meat','miːt'),W('neat','niːt')]]},
+
+{id:'uw',sym:'ʊ · uː',
+ title:{en:'/ʊ/ and /uː/',ar:'الصوتان /ʊ/ و /uː/'},
+ why:{en:'As with /ɪ/ and /iː/, learners use one vowel for both (full sounds like fool). English /ʊ/ is short and relaxed; /uː/ is long and tense.',
+      ar:'كما في /ɪ/ و/iː/، يستعمل المتعلمون صوتًا واحدًا للاثنين (فتصير full كأنها fool). صوت /ʊ/ قصير ومسترخٍ، و/uː/ طويل ومشدود.'},
+ tip:{en:'/ʊ/: lips loosely rounded, tongue a little lower. /uː/: lips tightly rounded and pushed forward, tongue high at the back. Make /uː/ about twice as long.',
+      ar:'/ʊ/: شفتان مستديرتان برخاوة واللسان أخفض قليلًا. /uː/: شفتان مستديرتان بشدة وممدودتان إلى الأمام واللسان مرتفع في الخلف. اجعل /uː/ أطول مرتين تقريبًا.'},
+ pairs:[[W('full','fʊl'),W('fool','fuːl')],[W('pull','pʊl'),W('pool','puːl')],[W('look','lʊk'),W('Luke','luːk')],
+        [W('could','kʊd'),W('cooed','kuːd')],[W('wood','wʊd'),W('wooed','wuːd')]]},
+{id:'aa',sym:'ɑː · ʌ',
+ title:{en:'/ɑː/ and /ʌ/',ar:'الصوتان /ɑː/ و /ʌ/'},
+ why:{en:'The long /ɑː/ and the short /ʌ/ are often confused (heart sounds like hut). In American English, /ɑː/ in words like heart is followed by an /r/ sound.',
+      ar:'يكثر الخلط بين /ɑː/ الطويل و/ʌ/ القصير (فتصير heart كأنها hut). وفي الأمريكية يتبع /ɑː/ صوت /r/ في كلمات مثل heart.'},
+ tip:{en:'/ɑː/: mouth wide open, tongue low and back, and long. /ʌ/: mouth half open, short and relaxed. Think of the “aah” you say at the doctor.',
+      ar:'/ɑː/: فم مفتوح واسعًا، واللسان منخفض في الخلف، والصوت طويل. /ʌ/: فم نصف مفتوح، والصوت قصير ومسترخٍ. تذكّر «آه» التي تقولها عند الطبيب.'},
+ pairs:[[W('heart','hɑːt','hɑːrt'),W('hut','hʌt')],[W('cart','kɑːt','kɑːrt'),W('cut','kʌt')],[W('barn','bɑːn','bɑːrn'),W('bun','bʌn')],
+        [W('march','mɑːtʃ','mɑːrtʃ'),W('much','mʌtʃ')],[W('park','pɑːk','pɑːrk'),W('puck','pʌk')]]},
+{id:'oo',sym:'ɒ · ɔː',
+ title:{en:'/ɒ/ and /ɔː/',ar:'الصوتان /ɒ/ و /ɔː/'},
+ why:{en:'British /ɒ/ (short) and /ɔː/ (long) are often replaced by the Arabic و or by /ʌ/ or /ɑː/, so cot, caught and cut may sound the same.',
+      ar:'يُبدَّل /ɒ/ البريطاني (القصير) و/ɔː/ (الطويل) غالبًا بالواو العربية أو بـ /ʌ/ أو /ɑː/، فتتشابه cot وcaught وcut.'},
+ tip:{en:'/ɒ/: short, lips slightly rounded, mouth open. /ɔː/: long, lips more rounded, tongue higher. In American English /ɒ/ becomes /ɑː/, and many Americans use the same vowel for cot and caught.',
+      ar:'/ɒ/: قصير، شفتان مستديرتان قليلًا، والفم مفتوح. /ɔː/: طويل، شفتان أكثر استدارة، واللسان أعلى. في الأمريكية يصير /ɒ/ هو /ɑː/، ويستعمل كثير من الأمريكيين الصوت نفسه في cot وcaught.'},
+ pairs:[[W('cot','kɒt','kɑːt'),W('caught','kɔːt')],[W('shot','ʃɒt','ʃɑːt'),W('short','ʃɔːt','ʃɔːrt')],[W('pot','pɒt','pɑːt'),W('port','pɔːt','pɔːrt')],
+        [W('not','nɒt','nɑːt'),W('north','nɔːθ','nɔːrθ')],[W('cod','kɒd','kɑːd'),W('cord','kɔːd','kɔːrd')]]},
+{id:'er',sym:'ɜː · ɑː',
+ title:{en:'/ɜː/ (as in bird)',ar:'الصوت /ɜː/ (كما في bird)'},
+ why:{en:'The vowel /ɜː/ has no Arabic equivalent. Learners read the letters and say bard for bird, or add a strong /r/ in British English.',
+      ar:'ليس لـ /ɜː/ مقابل في العربية. فيقرأ المتعلمون الحروف فيقولون bard بدل bird، أو يضيفون راءً قوية في البريطانية.'},
+ tip:{en:'Relax your lips and keep the tongue in the middle of the mouth, as in the hesitation sound “err”. Do not round your lips and do not open wide. In British English do not pronounce the r.',
+      ar:'أرخِ شفتيك وأبقِ اللسان في وسط الفم، كصوت التردد «إر». لا تستدر بشفتيك ولا تفتح فمك واسعًا. وفي البريطانية لا تنطق الراء.'},
+ pairs:[[W('bird','bɜːd','bɝːd'),W('bard','bɑːd','bɑːrd')],[W('hurt','hɜːt','hɝːt'),W('heart','hɑːt','hɑːrt')],[W('turn','tɜːn','tɝːn'),W('torn','tɔːn','tɔːrn')],
+        [W('firm','fɜːm','fɝːm'),W('farm','fɑːm','fɑːrm')],[W('work','wɜːk','wɝːk'),W('walk','wɔːk')]]},
+{id:'sw',sym:'ə',type:'words',
+ title:{en:'The weak vowel /ə/ (schwa)',ar:'الصوت الضعيف /ə/ (شْوا)'},
+ why:{en:'In English, a vowel in an unstressed syllable becomes a short, weak /ə/. Arabic speakers tend to read every letter in full: about becomes “a-bout” and teacher gets a full last vowel.',
+      ar:'في الإنجليزية تصير الحركة في المقطع غير المنبور /ə/ قصيرة وضعيفة. وينزع الناطقون بالعربية إلى قراءة كل حرف كاملًا: فتصير about «أ-باوت»، وتأخذ teacher حركة أخيرة كاملة.'},
+ tip:{en:'Make the unstressed syllable short, weak and relaxed, with the mouth almost closed, and put the stress on the other syllable: a-BOUT, ba-NA-na. Schwa is the most common vowel in English.',
+      ar:'اجعل المقطع غير المنبور قصيرًا وضعيفًا ومسترخيًا والفم شبه مغلق، وضع النبر على المقطع الآخر: a-BOUT وba-NA-na. وهذا أكثر الأصوات المتحركة شيوعًا في الإنجليزية.'},
+ words:[W('about','əˈbaʊt'),W('banana','bəˈnɑːnə','bəˈnænə'),W('teacher','ˈtiːtʃə','ˈtiːtʃɚ'),W('support','səˈpɔːt','səˈpɔːrt'),
+        W('problem','ˈprɒbləm','ˈprɑːbləm'),W('family','ˈfæməli'),W('sofa','ˈsəʊfə','ˈsoʊfə'),W('lemon','ˈlemən'),
+        W('doctor','ˈdɒktə','ˈdɑːktɚ'),W('police','pəˈliːs')]},
+
+{id:'ei',sym:'eɪ · e',
+ title:{en:'/eɪ/ and /e/',ar:'الصوتان /eɪ/ و /e/'},
+ why:{en:'/eɪ/ is a glide: the tongue starts at /e/ and moves up toward /ɪ/. Learners often say a pure vowel or shorten it, so late sounds like let.',
+      ar:'/eɪ/ صوت منزلق: يبدأ اللسان من /e/ ويصعد نحو /ɪ/. وكثيرًا ما ينطق المتعلمون صوتًا ثابتًا أو يقصّرونه، فتصير late كأنها let.'},
+ tip:{en:'Start with /e/ and slide the tongue up and forward toward /ɪ/. The mouth closes a little during the sound. Hold the first part longer than the second.',
+      ar:'ابدأ بـ /e/ ثم اصعد باللسان إلى الأعلى والأمام نحو /ɪ/. ينغلق الفم قليلًا أثناء الصوت. أطِل الجزء الأول أكثر من الثاني.'},
+ pairs:[[W('late','leɪt'),W('let','let')],[W('pain','peɪn'),W('pen','pen')],[W('wait','weɪt'),W('wet','wet')],
+        [W('tale','teɪl'),W('tell','tel')],[W('main','meɪn'),W('men','men')]]},
+{id:'ai',sym:'aɪ · eɪ',
+ title:{en:'/aɪ/ and /eɪ/',ar:'الصوتان /aɪ/ و /eɪ/'},
+ why:{en:'Learners often replace /aɪ/ with a long pure /aː/, or confuse it with /eɪ/ (time sounds like tame).',
+      ar:'يُبدل المتعلمون /aɪ/ غالبًا بـ /aː/ طويل ثابت، أو يخلطونه بـ /eɪ/ (فتصير time كأنها tame).'},
+ tip:{en:'Start with the mouth open, then glide up toward /ɪ/ as the jaw closes. /eɪ/ starts from a higher, more closed position, so compare how wide your mouth is at the start.',
+      ar:'ابدأ والفم مفتوح ثم انزلق نحو /ɪ/ مع انغلاق الفك. يبدأ /eɪ/ من موضع أعلى وأكثر انغلاقًا، فقارن اتساع فمك عند البداية.'},
+ pairs:[[W('time','taɪm'),W('tame','teɪm')],[W('mine','maɪn'),W('main','meɪn')],[W('right','raɪt'),W('rate','reɪt')],
+        [W('pie','paɪ'),W('pay','peɪ')],[W('buy','baɪ'),W('bay','beɪ')]]},
+{id:'oi',sym:'ɔɪ · aɪ',
+ title:{en:'/ɔɪ/ and /aɪ/',ar:'الصوتان /ɔɪ/ و /aɪ/'},
+ why:{en:'/ɔɪ/ is easily confused with /aɪ/, or said as a long /ɔː/. Boy may sound like buy.',
+      ar:'يسهل الخلط بين /ɔɪ/ و/aɪ/، أو ينطق /ɔː/ طويلًا. فقد تصير boy كأنها buy.'},
+ tip:{en:'Start with rounded lips as for /ɔː/, then glide to /ɪ/ as the lips spread. Boy starts with rounded lips; buy starts with an open mouth.',
+      ar:'ابدأ بشفتين مستديرتين كما في /ɔː/ ثم انزلق إلى /ɪ/ مع انفراج الشفتين. تبدأ boy بشفتين مستديرتين، وتبدأ buy بفم مفتوح.'},
+ pairs:[[W('boy','bɔɪ'),W('buy','baɪ')],[W('toy','tɔɪ'),W('tie','taɪ')],[W('oil','ɔɪl'),W('aisle','aɪl')],
+        [W('noise','nɔɪz'),W('nice','naɪs')],[W('voice','vɔɪs'),W('vice','vaɪs')]]},
+{id:'ou',sym:'əʊ · ɒ',
+ title:{en:'/əʊ/ (US /oʊ/) and /ɒ/',ar:'الصوتان /əʊ/ (أمريكي /oʊ/) و /ɒ/'},
+ why:{en:'Arabic speakers often say a pure long /oː/ here. In British English /əʊ/ glides from the middle of the mouth toward /ʊ/; in American English /oʊ/ starts further back. It is also confused with short /ɒ/: coat sounds like cot.',
+      ar:'ينطق الناطقون بالعربية غالبًا /oː/ طويلًا ثابتًا هنا. في البريطانية ينزلق /əʊ/ من وسط الفم نحو /ʊ/، وفي الأمريكية يبدأ /oʊ/ من موضع أبعد. ويُخلط أيضًا بـ /ɒ/ القصير: فتصير coat كأنها cot.'},
+ tip:{en:'Start with relaxed lips and glide to a rounded /ʊ/. Do not hold a pure “o”. Compare with /ɒ/, which is short and does not glide.',
+      ar:'ابدأ بشفتين مرتخيتين ثم انزلق إلى /ʊ/ بشفتين مستديرتين. لا تُثبّت «أو» خالصة. وقارنه بـ /ɒ/ القصير الذي لا ينزلق.'},
+ pairs:[[W('coat','kəʊt','koʊt'),W('cot','kɒt','kɑːt')],[W('note','nəʊt','noʊt'),W('not','nɒt','nɑːt')],[W('low','ləʊ','loʊ'),W('law','lɔː')],
+        [W('boat','bəʊt','boʊt'),W('bought','bɔːt')],[W('show','ʃəʊ','ʃoʊ'),W('saw','sɔː')]]},
+{id:'au',sym:'aʊ · əʊ',
+ title:{en:'/aʊ/ and /əʊ/',ar:'الصوتان /aʊ/ و /əʊ/'},
+ why:{en:'Learners often replace /aʊ/ with a pure /aː/, or confuse it with /əʊ/ (now sounds like know).',
+      ar:'يُبدل المتعلمون /aʊ/ غالبًا بـ /aː/ ثابت، أو يخلطونه بـ /əʊ/ (فتصير now كأنها know).'},
+ tip:{en:'Start with the mouth open, as for /a/, then glide toward /ʊ/ as the lips round and the jaw closes. /əʊ/ starts from the middle of the mouth.',
+      ar:'ابدأ والفم مفتوح كما في /a/ ثم انزلق نحو /ʊ/ مع استدارة الشفتين وانغلاق الفك. أما /əʊ/ فيبدأ من وسط الفم.'},
+ pairs:[[W('now','naʊ'),W('know','nəʊ','noʊ')],[W('town','taʊn'),W('tone','təʊn','toʊn')],[W('how','haʊ'),W('hoe','həʊ','hoʊ')],
+        [W('loud','laʊd'),W('load','ləʊd','loʊd')],[W('house','haʊs'),W('hose','həʊz','hoʊz')]]},
+{id:'ia',sym:'ɪə · eə',
+ title:{en:'/ɪə/ and /eə/',ar:'الصوتان /ɪə/ و /eə/'},
+ why:{en:'These two British diphthongs end in a weak /ə/. In American English they become a vowel plus /r/. Learners often mix them up: beer and bear sound alike.',
+      ar:'ينتهي هذان الصوتان المركّبان البريطانيان بـ /ə/ ضعيف. وفي الأمريكية يصيران حركة تتبعها /r/. ويخلط المتعلمون بينهما: فتتشابه beer وbear.'},
+ tip:{en:'For /ɪə/ begin with /ɪ/ and glide to /ə/ in the middle of the mouth. For /eə/ begin with /e/, with the mouth a little more open, then glide to /ə/. In American English say the vowel, then /r/.',
+      ar:'في /ɪə/ ابدأ بـ /ɪ/ ثم انزلق إلى /ə/ في وسط الفم. وفي /eə/ ابدأ بـ /e/ والفم أكثر انفتاحًا قليلًا ثم انزلق إلى /ə/. وفي الأمريكية انطق الحركة ثم /r/.'},
+ pairs:[[W('beer','bɪə','bɪr'),W('bear','beə','ber')],[W('here','hɪə','hɪr'),W('hair','heə','her')],[W('fear','fɪə','fɪr'),W('fair','feə','fer')],
+        [W('dear','dɪə','dɪr'),W('dare','deə','der')],[W('ear','ɪə','ɪr'),W('air','eə','er')]]},
+{id:'ue',sym:'ʊə · ɔː',
+ title:{en:'/ʊə/ and /ɔː/',ar:'الصوتان /ʊə/ و /ɔː/'},
+ why:{en:'/ʊə/ is rare, and many British speakers now say /ɔː/ instead (poor sounds like pour). Learners often turn it into a pure /uː/ or /ɔː/.',
+      ar:'/ʊə/ نادر، ويقول كثير من البريطانيين اليوم /ɔː/ بدلًا منه (فتصير poor كأنها pour). وكثيرًا ما يحوّله المتعلمون إلى /uː/ أو /ɔː/ ثابت.'},
+ tip:{en:'Begin with a short, rounded /ʊ/ and glide to /ə/. In American English say /ʊ/ followed by /r/. Do not turn it into a long /uː/.',
+      ar:'ابدأ بـ /ʊ/ قصير مستدير ثم انزلق إلى /ə/. وفي الأمريكية انطق /ʊ/ ثم /r/. لا تحوّله إلى /uː/ طويل.'},
+ pairs:[[W('tour','tʊə','tʊr'),W('tore','tɔː','tɔːr')],[W('poor','pʊə','pʊr'),W('pour','pɔː','pɔːr')],[W('cure','kjʊə','kjʊr'),W('core','kɔː','kɔːr')],
+        [W('moor','mʊə','mʊr'),W('more','mɔː','mɔːr')],[W('sure','ʃʊə','ʃʊr'),W('shore','ʃɔː','ʃɔːr')]]}
+);
+
+/* Three groups, in teaching order */
+const GROUPS=[['con','groupCon'],['vow','groupVow'],['dip','groupDip']];
+const ORDER={
+ con:['pb','td','kg','fv','th','sz','sh','zh','jg','jy','hh','mn','ng','rl','wv','cl'],
+ vow:['ii','uw','ae','ua','aa','oo','er','sw'],
+ dip:['ei','ai','oi','ou','au','ia','ue']
+};
+const ALL=[];
+GROUPS.forEach(function(g){ORDER[g[0]].forEach(function(id){const s=SETS.find(x=>x.id===id);s.group=g[0];ALL.push(s);});});
+SETS.length=0; ALL.forEach(function(s){SETS.push(s);});
+
+const AB=[
+{w:'car',uk:'kɑː',us:'kɑːr',note:{en:'American speakers pronounce the /r/ after the vowel. British speakers do not.',ar:'ينطق الأمريكيون حرف /r/ بعد الحرف المتحرك، ولا ينطقه البريطانيون.'}},
+{w:'park',uk:'pɑːk',us:'pɑːrk',note:{en:'The same rule: the American /r/ is pronounced before /k/.',ar:'القاعدة نفسها: يُنطق /r/ الأمريكي قبل /k/.'}},
+{w:'bird',uk:'bɜːd',us:'bɝːd',note:{en:'In American English the vowel itself is r-coloured. In British English it is a plain long vowel.',ar:'في الأمريكية يكتسب الصوت المتحرك لونًا راءيًّا، أما في البريطانية فهو صوت طويل عادي.'}},
+{w:'water',uk:'ˈwɔːtə',us:'ˈwɑːtɚ',note:{en:'The first vowel differs. In fast American speech the /t/ becomes a quick tap, close to /d/.',ar:'يختلف الصوت المتحرك الأول. وفي الكلام الأمريكي السريع يصير /t/ نقرة خفيفة قريبة من /d/.'}},
+{w:'better',uk:'ˈbetə',us:'ˈbetɚ',note:{en:'Between vowels, the American /t/ is a quick tap, close to /d/. British English keeps a clear /t/.',ar:'بين حرفين متحركين يصير /t/ الأمريكي نقرة خفيفة قريبة من /d/. وتحتفظ البريطانية بـ /t/ واضحة.'}},
+{w:'hot',uk:'hɒt',us:'hɑːt',note:{en:'British /ɒ/ is short and rounded. American English uses the open /ɑː/.',ar:'في البريطانية /ɒ/ قصير ومستدير، وفي الأمريكية يُستعمل /ɑː/ المفتوح.'}},
+{w:'dance',uk:'dɑːns',us:'dæns',note:{en:'British English uses /ɑː/ in words like dance, can’t and path. American English uses /æ/.',ar:'تستعمل البريطانية /ɑː/ في كلمات مثل dance وcan’t وpath، وتستعمل الأمريكية /æ/.'}},
+{w:'go',uk:'gəʊ',us:'goʊ',note:{en:'The British diphthong starts in the middle of the mouth. The American one starts further back, with rounded lips.',ar:'يبدأ الصوت المركّب البريطاني من وسط الفم، والأمريكي من موضع أبعد في الخلف مع استدارة الشفتين.'}},
+{w:'tomato',uk:'təˈmɑːtəʊ',us:'təˈmeɪtoʊ',note:{en:'The second syllable differs: /ɑː/ in British English, /eɪ/ in American English.',ar:'يختلف المقطع الثاني: /ɑː/ في البريطانية و/eɪ/ في الأمريكية.'}},
+{w:'schedule',uk:'ˈʃedjuːl',us:'ˈskedʒuːl',note:{en:'British English traditionally starts with sh-, American English with sk-.',ar:'تبدأ البريطانية تقليديًّا بـ sh، وتبدأ الأمريكية بـ sk.'}},
+{w:'new',uk:'njuː',us:'nuː',note:{en:'After /n/, American English usually drops the /j/.',ar:'بعد /n/ تحذف الأمريكية غالبًا صوت /j/.'}},
+{w:'vitamin',uk:'ˈvɪtəmɪn',us:'ˈvaɪtəmɪn',note:{en:'The first vowel is /ɪ/ in British English and /aɪ/ in American English.',ar:'الصوت المتحرك الأول /ɪ/ في البريطانية و/aɪ/ في الأمريكية.'}},
+{w:'garage',uk:'ˈgærɑːʒ',us:'gəˈrɑːʒ',note:{en:'Stress and vowels differ. British English also has /ˈgærɪdʒ/.',ar:'يختلف موضع النبر والأصوات المتحركة. وللبريطانية نطق آخر هو /ˈgærɪdʒ/.'}},
+{w:'leisure',uk:'ˈleʒə',us:'ˈliːʒɚ',note:{en:'American English often uses /iː/ in the first syllable.',ar:'تستعمل الأمريكية غالبًا /iː/ في المقطع الأول.'}}
+];
+
+/* ---------- Interface text ---------- */
+const T={
+ en:{
+  name:'Say It Right', tagline:'Pronunciation coach for Arabic speakers learning English',
+  accent:'Accent', uk:'British', us:'American', langBtn:'عربي',
+  tabSounds:'Sounds', tabAb:'British vs American', tabProg:'Progress',
+  hintSounds:'Pick a sound, listen to the model, then say the word and check.',
+  why:'Why it is hard', tip:'How to make it',
+  listen:'Listen', slow:'Slow', say:'Say it', stop:'Stop', mine:'My recording', upload:'Add my recording',
+  caveat:'The check uses your browser’s speech recognition, which usually needs an internet connection. It tells you whether the word was understood as the word you meant. It does not measure single sounds, so use your ear and the tips as well.',
+  abHint:'The same word in two accents. Listen to both, then say it. The check cannot tell the accents apart, so compare your recording with each model by ear.',
+  abChange:'What changes',
+  ok:'I heard “{top}”. Well done.',
+  near:'I heard “{top}”, and “{w}” was also possible. Say it again, slowly and clearly.',
+  partner:'I heard “{top}” instead of “{w}”. Listen again and check {sound}.',
+  other:'I heard “{top}”. Try “{w}” again.',
+  none:'I did not catch a word. Move closer to the microphone and try again.',
+  listening:'Listening… say “{w}”',
+  recOnly:'Recorded. Compare your recording with the model by ear.',
+  noRec:'This browser cannot check words, so your voice was recorded only. Compare it with the model by ear.',
+  denied:'The microphone is blocked. Allow it in your browser and try again.',
+  net:'The speech check could not reach its service. Check your internet connection.',
+  noMic:'This device cannot record in this browser. Add a recording from your phone instead.',
+  uploaded:'Recording added. Compare it with the model by ear.',
+  blocked:'This page view cannot use the microphone. Open the downloaded file in Chrome or Edge to record and get feedback. You can still add a recording made on your phone and compare it by ear.',
+  noTts:'This browser cannot play spoken models.',
+  micAsk:'To record and check your pronunciation, tap Allow when your browser asks for the microphone.', micOn:'The microphone is on. You can start practising.',
+  micDenied:'The microphone is blocked on this device.', micNone:'This browser cannot use the microphone.',
+  micEnable:'Enable microphone', micTry:'Try again',
+  micAsking:'Waiting for your answer. Tap Allow in the box your browser shows.',
+  micInsecure:'The microphone works only on a secure page (https). Open this page from its https link, not from a file saved on your phone.',
+  micHow:'How to allow it on your device:',
+  micAndroid:'Tap the lock or settings icon at the left of the address bar.|Tap Permissions, then Microphone.|Choose Allow, come back to this page and tap Try again.|If you do not see it: Settings > Apps > your browser > Permissions > Microphone > Allow.',
+  micIosSafari:'Tap the “aA” icon at the left of the address bar.|Tap Website Settings, then set Microphone to Allow.|If it is still blocked: Settings > Privacy & Security > Microphone > turn on Safari.|Come back to this page and tap Try again.',
+  micIosOther:'Open the iPhone Settings app.|Find your browser (for example Chrome) and turn on Microphone.|Come back to this page and tap Try again.',
+  micDesk:'Click the lock icon next to the page address.|Set Microphone to Allow.|Reload the page or tap Try again.',
+  groupCon:'Consonants', groupVow:'Vowels', groupDip:'Diphthongs',
+  voiceOk:'{a} voice: {name}', voiceFallback:'No {a} voice found on this device, so another English voice is used. Install one in your device’s speech settings.', voiceNone:'No English voice found on this device. Install one in your device’s speech settings.',
+  progTitle:'Words you said correctly', progNone:'No practice yet', progOf:'{n} of {m} words', progSum:'{n} words said correctly so far, from {a} attempts.',
+  progPractice:'Practice', progStore:'Saved only in this browser.', clear:'Clear my progress', clear2:'Tap again to clear'
+ },
+ ar:{
+  name:'انطقها صح', tagline:'مدرّب النطق للناطقين بالعربية الذين يتعلمون الإنجليزية',
+  accent:'اللهجة', uk:'بريطانية', us:'أمريكية', langBtn:'English',
+  tabSounds:'الأصوات', tabAb:'بريطاني مقابل أمريكي', tabProg:'التقدّم',
+  hintSounds:'اختر صوتًا، واستمع إلى النموذج، ثم انطق الكلمة وافحصها.',
+  why:'لماذا هو صعب', tip:'كيف تنطقه',
+  listen:'استمع', slow:'ببطء', say:'انطق', stop:'إيقاف', mine:'تسجيلي', upload:'أضف تسجيلي',
+  caveat:'يعتمد الفحص على خاصية التعرف على الكلام في متصفحك، وتحتاج غالبًا إلى اتصال بالإنترنت. هو يخبرك هل فُهمت الكلمة على أنها الكلمة التي قصدتها، ولا يقيس الأصوات المفردة، فاعتمد على أذنك وعلى النصائح أيضًا.',
+  abHint:'الكلمة نفسها بلهجتين. استمع إلى الاثنتين ثم انطقها. لا يستطيع الفحص التمييز بين اللهجتين، فقارن تسجيلك بكل نموذج بأذنك.',
+  abChange:'ما الذي يتغير',
+  ok:'سمعتُ «{top}». أحسنت.',
+  near:'سمعتُ «{top}»، وكانت «{w}» محتملة أيضًا. انطقها مرة أخرى ببطء ووضوح.',
+  partner:'سمعتُ «{top}» بدل «{w}». استمع مرة أخرى وراجع {sound}.',
+  other:'سمعتُ «{top}». حاول نطق «{w}» مرة أخرى.',
+  none:'لم أسمع كلمة واضحة. اقترب من الميكروفون وحاول مرة أخرى.',
+  listening:'أستمع… انطق «{w}»',
+  recOnly:'تم التسجيل. قارن تسجيلك بالنموذج بأذنك.',
+  noRec:'هذا المتصفح لا يفحص الكلمات، فسُجّل صوتك فقط. قارنه بالنموذج بأذنك.',
+  denied:'الميكروفون محجوب. اسمح به في المتصفح وحاول مرة أخرى.',
+  net:'تعذّر وصول الفحص إلى خدمته. تأكد من اتصالك بالإنترنت.',
+  noMic:'لا يستطيع هذا الجهاز التسجيل في هذا المتصفح. أضف تسجيلًا من هاتفك بدل ذلك.',
+  uploaded:'تمت إضافة التسجيل. قارنه بالنموذج بأذنك.',
+  blocked:'لا تستطيع طريقة العرض هذه استعمال الميكروفون. افتح الملف المحمَّل في Chrome أو Edge لتسجّل وتحصل على الفحص. ويمكنك إضافة تسجيل سجّلته على هاتفك ومقارنته بأذنك.',
+  noTts:'هذا المتصفح لا يشغّل النماذج المنطوقة.',
+  micAsk:'لتسجّل نطقك وتفحصه، اضغط «السماح» عندما يطلب المتصفح استخدام الميكروفون.', micOn:'الميكروفون يعمل. يمكنك أن تبدأ التدرّب.',
+  micDenied:'الميكروفون محجوب على هذا الجهاز.', micNone:'لا يستطيع هذا المتصفح استعمال الميكروفون.',
+  micEnable:'تفعيل الميكروفون', micTry:'حاول مرة أخرى',
+  micAsking:'في انتظار ردّك. اضغط «السماح» في النافذة التي يعرضها المتصفح.',
+  micInsecure:'لا يعمل الميكروفون إلا في صفحة آمنة (https). افتح الصفحة من رابطها الآمن، وليس من ملف محفوظ على هاتفك.',
+  micHow:'كيف تسمح به على جهازك:',
+  micAndroid:'اضغط أيقونة القفل أو الإعدادات على يسار شريط العنوان.|اضغط «الأذونات» ثم «الميكروفون».|اختر «السماح»، ثم ارجع إلى هذه الصفحة واضغط «حاول مرة أخرى».|وإن لم تجدها: الإعدادات > التطبيقات > متصفحك > الأذونات > الميكروفون > السماح.',
+  micIosSafari:'اضغط أيقونة «aA» على يسار شريط العنوان.|اضغط «إعدادات الموقع» ثم اجعل الميكروفون «سماح».|وإن بقي محجوبًا: الإعدادات > الخصوصية والأمان > الميكروفون > فعّل Safari.|ارجع إلى هذه الصفحة واضغط «حاول مرة أخرى».',
+  micIosOther:'افتح تطبيق الإعدادات في الآيفون.|ابحث عن متصفحك (مثل Chrome) وفعّل الميكروفون.|ارجع إلى هذه الصفحة واضغط «حاول مرة أخرى».',
+  micDesk:'اضغط أيقونة القفل بجوار عنوان الصفحة.|اجعل الميكروفون «سماح».|أعد تحميل الصفحة أو اضغط «حاول مرة أخرى».',
+  groupCon:'الصوامت', groupVow:'الصوائت', groupDip:'الصوائت المركّبة',
+  voiceOk:'الصوت {a}: {name}', voiceFallback:'لا يوجد صوت {a} على هذا الجهاز، فيُستعمل صوت إنجليزي آخر. ثبّت صوتًا من إعدادات الكلام في جهازك.', voiceNone:'لا يوجد صوت إنجليزي على هذا الجهاز. ثبّت صوتًا من إعدادات الكلام في جهازك.',
+  progTitle:'الكلمات التي نطقتها صحيحة', progNone:'لا تدريب بعد', progOf:'{n} من {m} كلمة', progSum:'نطقتَ {n} كلمة صحيحة حتى الآن من {a} محاولة.',
+  progPractice:'تدرّب', progStore:'يُحفظ في هذا المتصفح فقط.', clear:'امسح تقدّمي', clear2:'اضغط مرة أخرى للمسح'
+ }
+};
+const ACC_AR={uk:'البريطاني',us:'الأمريكي'};
+const ACC_EN={uk:'British',us:'American'};
+
+/* ---------- State and storage ---------- */
+const store={
+  get(k){try{return window.localStorage.getItem(k);}catch(e){return null;}},
+  set(k,v){try{window.localStorage.setItem(k,v);}catch(e){}}
+};
+let stats={};
+try{stats=JSON.parse(store.get('sir.stats')||'{}')||{};}catch(e){stats={};}
+const state={
+  lang:store.get('sir.lang')==='en'?'en':'ar',
+  accent:store.get('sir.accent')==='us'?'us':'uk',
+  tab:'sounds', setId:store.get('sir.set')||SETS[0].id,
+  status:{}, recUrls:{}, listening:null, clearArmed:false, micBlocked:false, mic:'unknown'
+};
+if(!SETS.some(s=>s.id===state.setId))state.setId=SETS[0].id;
+try{
+  const pp=document.permissionsPolicy||document.featurePolicy;
+  if(pp&&typeof pp.allowsFeature==='function'&&!pp.allowsFeature('microphone'))state.micBlocked=true;
+}catch(e){}
+
+const app=document.getElementById('app');
+const fileIn=document.getElementById('fileIn');
+const tx=(k,v)=>{let s=T[state.lang][k]||k;if(v)for(const n in v)s=s.split('{'+n+'}').join(v[n]);return s;};
+const bi=o=>o[state.lang];
+/* keep /ipa/ symbols in their own left-to-right run inside Arabic sentences */
+const fm=s=>s.replace(/\/[^\/\s][^\/]*\//g,function(m){return '<span dir="ltr" class="ltr">'+m+'</span>';});
+const ipaOf=w=>state[ 'accent' ]==='uk'?w.uk:w.us;
+const slug=s=>s.replace(/[^a-z0-9]+/gi,'-');
+
+/* ---------- Icons ---------- */
+function icon(n){
+  const a='width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
+  if(n==='speaker')return '<svg '+a+'><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
+  if(n==='mic')return '<svg '+a+'><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>';
+  if(n==='stop')return '<svg '+a+'><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>';
+  if(n==='play')return '<svg '+a+'><path d="M8 5l11 7-11 7z" fill="currentColor"/></svg>';
+  if(n==='file')return '<svg '+a+'><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M5 20h14"/></svg>';
+  if(n==='check')return '<svg '+a+'><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>';
+  if(n==='alert')return '<svg '+a+'><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5"/><path d="M12 18.5v.01"/></svg>';
+  return '<svg '+a+'><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5v.01"/></svg>';
+}
+
+/* ---------- Microphone permission (asked when the page starts) ---------- */
+/* A web page cannot open the phone's settings itself. It asks the browser for the microphone
+   (which shows the system permission box), and when the answer is "blocked" it shows the exact
+   path to the right setting for this device. */
+function platform(){
+  const ua=navigator.userAgent||'';
+  const ipad=/Macintosh/.test(ua)&&navigator.maxTouchPoints>1;
+  if(/iPhone|iPad|iPod/.test(ua)||ipad)return /CriOS|FxiOS|EdgiOS|OPiOS/.test(ua)?'iosOther':'iosSafari';
+  if(/Android/i.test(ua))return 'android';
+  return 'desk';
+}
+const STEPS={android:'micAndroid',iosSafari:'micIosSafari',iosOther:'micIosOther',desk:'micDesk'};
+function micApi(){return !!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia);}
+function micMissing(){setMic(window.isSecureContext===false?'insecure':'unavailable');}
+function paintMic(){
+  const el=document.getElementById('micBar'); if(!el)return;
+  if(state.micBlocked){el.className='';el.innerHTML='';return;}
+  const m=state.mic; let kind='info',ic='info',msg=tx('micAsk'),btn='',steps='';
+  if(m==='granted'){kind='good';ic='check';msg=tx('micOn');}
+  else if(m==='asking'){msg=tx('micAsking');}
+  else if(m==='denied'){
+    kind='bad';ic='alert';msg=tx('micDenied');btn=tx('micTry');
+    steps='<div class="how"><strong>'+tx('micHow')+'</strong><ol>'+tx(STEPS[platform()]).split('|').map(function(t){return '<li>'+t+'</li>';}).join('')+'</ol></div>';
+  }
+  else if(m==='insecure'){kind='warn';ic='alert';msg=tx('micInsecure');}
+  else if(m==='unavailable'){kind='warn';ic='alert';msg=tx('micNone');}
+  else if(m==='unknown'){btn=tx('micEnable');}
+  el.className='micbar status '+kind;
+  el.innerHTML=icon(ic)+'<span>'+msg+'</span>'+(btn?'<button class="btn say" type="button" data-act="mic" data-id="mic">'+icon('mic')+btn+'</button>':'')+steps;
+}
+function setMic(m){state.mic=m;paintMic();}
+async function askMic(){
+  if(state.micBlocked)return;
+  if(!micApi()){micMissing();return;}
+  setMic('asking');
+  try{
+    const st=await navigator.mediaDevices.getUserMedia({audio:true});
+    st.getTracks().forEach(function(t){t.stop();});
+    setMic('granted');
+  }catch(e){
+    setMic(e&&(e.name==='NotAllowedError'||e.name==='SecurityError')?'denied':'unavailable');
+  }
+}
+async function initMic(){
+  if(state.micBlocked)return;
+  if(!micApi()){micMissing();return;}
+  try{
+    if(navigator.permissions&&navigator.permissions.query){
+      const p=await navigator.permissions.query({name:'microphone'});
+      p.onchange=function(){if(p.state==='granted')setMic('granted');else if(p.state==='denied')setMic('denied');};
+      if(p.state==='granted'){setMic('granted');return;}
+      if(p.state==='denied'){setMic('denied');return;}
+    }
+  }catch(e){}
+  askMic();
+}
+
+/* ---------- Speech output ---------- */
+const hasTts='speechSynthesis' in window&&typeof SpeechSynthesisUtterance!=='undefined';
+function pickVoice(acc){
+  if(!hasTts)return {voice:null,exact:false,any:false};
+  const want=acc==='uk'?'en-GB':'en-US';
+  const vs=(speechSynthesis.getVoices()||[]).filter(v=>/^en/i.test((v.lang||'').replace('_','-')));
+  const exact=vs.filter(v=>(v.lang||'').replace('_','-').toLowerCase()===want.toLowerCase());
+  if(exact.length){return {voice:exact.find(v=>v.localService)||exact[0],exact:true,any:true};}
+  return {voice:vs[0]||null,exact:false,any:vs.length>0};
+}
+function speak(text,acc,rate){
+  if(!hasTts)return false;
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang=acc==='uk'?'en-GB':'en-US';
+    const p=pickVoice(acc); if(p.voice)u.voice=p.voice;
+    u.rate=rate||0.9;
+    speechSynthesis.speak(u);
+    return true;
+  }catch(e){return false;}
+}
+function voiceLine(){
+  const el=document.getElementById('voiceInfo'); if(!el)return;
+  if(!hasTts){el.textContent=tx('noTts');el.className='voices warn';return;}
+  const p=pickVoice(state.accent);
+  const an=state.lang==='ar'?ACC_AR[state.accent]:ACC_EN[state.accent];
+  if(p.exact){el.textContent=tx('voiceOk',{a:an,name:p.voice.name});el.className='voices';}
+  else if(p.any){el.textContent=tx('voiceFallback',{a:an});el.className='voices warn';}
+  else{el.textContent=tx('voiceNone');el.className='voices warn';}
+}
+if(hasTts){try{speechSynthesis.addEventListener('voiceschanged',voiceLine);}catch(e){}}
+
+/* ---------- Speech check ---------- */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let active=null;
+
+function setStatus(key,kind,code,vars){
+  state.status[key]={kind:kind,code:code,vars:vars||{}};
+  paintStatus(key);
+}
+function paintStatus(key){
+  const el=document.getElementById('st-'+key); if(!el)return;
+  const s=state.status[key];
+  if(!s){el.className='status';el.innerHTML='';return;}
+  const ic=s.kind==='good'?'check':(s.kind==='info'?'info':'alert');
+  const v=Object.assign({},s.vars);
+  if(v.sound)v.sound='/'+v.sound.split(' · ').join(state.lang==='ar'?'/ و /':'/ and /')+'/';
+  let msg=fm(tx(s.code,v));
+  msg=msg.replace(/“([^”]*)”|«([^»]*)»/g,function(m,a,b){return (m.charAt(0)==='“'?'“':'«')+'<span class="q">'+(a!==undefined?a:b)+'</span>'+(m.charAt(0)==='“'?'”':'»');});
+  el.className='status '+s.kind;
+  el.innerHTML=icon(ic)+'<span>'+msg+'</span>';
+}
+function paintButton(key){
+  const b=document.querySelector('[data-act="say"][data-key="'+key+'"]'); if(!b)return;
+  const on=state.listening===key;
+  b.classList.toggle('on',on);
+  b.setAttribute('aria-pressed',on?'true':'false');
+  b.innerHTML=on?('<span class="dot">'+icon('stop')+'</span>'+tx('stop')):(icon('mic')+tx('say'));
+}
+function record(word,ok){
+  const s=stats[word]||(stats[word]={a:0,ok:0});
+  s.a++; if(ok)s.ok++;
+  store.set('sir.stats',JSON.stringify(stats));
+}
+function judge(target,partner,alts){
+  const toks=a=>a.toLowerCase().replace(/[^a-z' ]/g,' ').split(/\s+/).filter(Boolean);
+  const top=alts.length?toks(alts[0]):[];
+  const all=[].concat.apply([],alts.map(toks));
+  if(top.indexOf(target)>-1)return {code:'ok',kind:'good',top:target,ok:true};
+  if(all.indexOf(target)>-1)return {code:'near',kind:'warn',top:top.join(' ')||alts[0]};
+  if(partner&&top.indexOf(partner)>-1)return {code:'partner',kind:'bad',top:partner};
+  if(alts.length)return {code:'other',kind:'bad',top:alts[0]};
+  return {code:'none',kind:'warn'};
+}
+function stopActive(){ if(active){active.cancel();} }
+
+async function startCheck(key,word,partner,soundText){
+  if(state.listening===key){ if(active)active.finishNow(); return; }
+  stopActive();
+  if(hasTts){try{speechSynthesis.cancel();}catch(e){}}
+  state.listening=key; paintButton(key);
+  setStatus(key,'info','listening',{w:word});
+
+  const ctx={done:false,alts:[],err:null,rec:null,mr:null,stream:null,chunks:[],timer:null,hadRecognizer:false,hadRecorder:false};
+  function cleanup(){
+    clearTimeout(ctx.timer);
+    if(ctx.stream){ctx.stream.getTracks().forEach(t=>t.stop());ctx.stream=null;}
+    state.listening=null; active=null; paintButton(key);
+  }
+  function conclude(){
+    if(ctx.done)return; ctx.done=true;
+    const finishWith=function(){
+      cleanup();
+      if(ctx.hadRecognizer&&ctx.alts.length){
+        const j=judge(word,partner,ctx.alts);
+        record(word,!!j.ok);
+        setStatus(key,j.kind,j.code,{top:j.top,w:word,sound:soundText});
+        refreshProgress();
+      }else if(ctx.err==='not-allowed'||ctx.err==='service-not-allowed'){
+        setStatus(key,'bad','denied');
+      }else if(ctx.err==='network'){
+        setStatus(key,'bad','net');
+      }else if(ctx.hadRecognizer){
+        setStatus(key,'warn','none');
+      }else if(ctx.hadRecorder){
+        setStatus(key,'info','noRec');
+      }else{
+        setStatus(key,'bad','noMic');
+      }
+      repaintMine(key);
+    };
+    if(ctx.mr&&ctx.mr.state!=='inactive'){
+      ctx.mr.onstop=function(){
+        try{
+          if(ctx.chunks.length){
+            if(state.recUrls[key])URL.revokeObjectURL(state.recUrls[key]);
+            state.recUrls[key]=URL.createObjectURL(new Blob(ctx.chunks,{type:ctx.mr.mimeType||'audio/webm'}));
+          }
+        }catch(e){}
+        finishWith();
+      };
+      try{ctx.mr.stop();}catch(e){finishWith();}
+    }else finishWith();
+    if(ctx.rec){try{ctx.rec.abort();}catch(e){}}
+  }
+  active={
+    cancel:function(){ctx.done=true;clearTimeout(ctx.timer);
+      if(ctx.rec){try{ctx.rec.abort();}catch(e){}}
+      if(ctx.mr&&ctx.mr.state!=='inactive'){ctx.mr.onstop=null;try{ctx.mr.stop();}catch(e){}}
+      cleanup(); state.status[key]=null; paintStatus(key);},
+    finishNow:conclude
+  };
+
+  // Recorder (for hearing yourself back)
+  if(!state.micBlocked&&navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&typeof MediaRecorder!=='undefined'){
+    try{
+      const st=await navigator.mediaDevices.getUserMedia({audio:true});
+      if(ctx.done){st.getTracks().forEach(function(t){t.stop();});return;}
+      ctx.stream=st; if(state.mic!=='granted')setMic('granted');
+      ctx.mr=new MediaRecorder(ctx.stream);
+      ctx.mr.ondataavailable=function(e){if(e.data&&e.data.size)ctx.chunks.push(e.data);};
+      ctx.mr.start(); ctx.hadRecorder=true;
+    }catch(err){
+      ctx.stream=null; ctx.mr=null;
+      if(err&&(err.name==='NotAllowedError'||err.name==='SecurityError')){ctx.err='not-allowed';setMic('denied');}
+    }
+  }
+  if(ctx.done)return;
+
+  // Recognizer (for checking the word)
+  if(SR&&ctx.err!=='not-allowed'){
+    try{
+      const rec=new SR();
+      rec.lang=state.accent==='uk'?'en-GB':'en-US';
+      rec.interimResults=false; rec.maxAlternatives=5; rec.continuous=false;
+      rec.onresult=function(e){
+        const r=e.results&&e.results[0]; if(!r)return;
+        ctx.alts=[]; for(let i=0;i<r.length;i++)ctx.alts.push(r[i].transcript);
+      };
+      rec.onerror=function(e){ctx.err=e.error||'error';};
+      rec.onend=function(){conclude();};
+      rec.start(); ctx.rec=rec; ctx.hadRecognizer=true;
+    }catch(e){ctx.rec=null;}
+  }
+  if(!ctx.hadRecognizer&&!ctx.hadRecorder){ conclude(); return; }
+  ctx.timer=setTimeout(conclude,6000);
+}
+
+function repaintMine(key){
+  const b=document.querySelector('[data-act="mine"][data-key="'+key+'"]');
+  if(b)b.hidden=!state.recUrls[key];
+}
+let player=null;
+function playMine(key){
+  const u=state.recUrls[key]; if(!u)return;
+  try{if(player)player.pause();}catch(e){}
+  player=new Audio(u); player.play().catch(function(){});
+}
+let uploadKey=null;
+fileIn.addEventListener('change',function(){
+  const f=fileIn.files&&fileIn.files[0]; if(!f||!uploadKey)return;
+  const key=uploadKey; uploadKey=null;
+  try{
+    if(state.recUrls[key])URL.revokeObjectURL(state.recUrls[key]);
+    state.recUrls[key]=URL.createObjectURL(f);
+    setStatus(key,'info','uploaded'); repaintMine(key);
+  }catch(e){}
+  fileIn.value='';
+});
+
+/* ---------- Views ---------- */
+function card(key,w,partner,soundText,scopeAccent){
+  const mic=state.micBlocked
+    ?'<button class="btn" type="button" data-act="upload" data-key="'+key+'">'+icon('file')+tx('upload')+'</button>'
+    :'<button class="btn say" type="button" data-act="say" data-key="'+key+'" data-w="'+w.w+'" data-p="'+(partner||'')+'" data-sound="'+(soundText||'')+'" aria-pressed="false">'+icon('mic')+tx('say')+'</button>';
+  return '<div class="card">'
+   +'<div class="cardhead"><span class="w" lang="en">'+w.w+'</span><span class="ipa">/'+ipaOf(w)+'/</span></div>'
+   +'<div class="acts">'
+   +'<button class="btn" type="button" data-act="speak" data-w="'+w.w+'" data-acc="'+state.accent+'" data-rate="0.9">'+icon('speaker')+tx('listen')+'</button>'
+   +'<button class="btn" type="button" data-act="speak" data-w="'+w.w+'" data-acc="'+state.accent+'" data-rate="0.5">'+icon('speaker')+tx('slow')+'</button>'
+   +mic
+   +'<button class="btn" type="button" data-act="mine" data-key="'+key+'"'+(state.recUrls[key]?'':' hidden')+'>'+icon('play')+tx('mine')+'</button>'
+   +'</div>'
+   +'<div class="status" id="st-'+key+'" role="status" aria-live="polite"></div>'
+   +'</div>';
+}
+function progressOf(set){
+  const words=set.type==='words'?set.words:[].concat.apply([],set.pairs);
+  let n=0; words.forEach(function(w){if(stats[w.w]&&stats[w.w].ok>0)n++;});
+  return {n:n,m:words.length};
+}
+function soundsView(){
+  const set=SETS.find(s=>s.id===state.setId);
+  const gbar='<div class="groups" role="group">'+GROUPS.map(function(g){
+    return '<button class="gbtn" type="button" data-act="group" data-v="'+g[0]+'" data-id="grp-'+g[0]+'" aria-pressed="'+(set.group===g[0])+'">'+tx(g[1])+'</button>';
+  }).join('')+'</div>';
+  const chips=SETS.filter(s=>s.group===set.group).map(function(s){
+    const p=progressOf(s);
+    return '<button class="set" type="button" data-act="set" data-v="'+s.id+'" data-id="set-'+s.id+'" aria-pressed="'+(s.id===state.setId)+'" aria-label="'+bi(s.title)+'">'
+      +'<span class="sym">'+s.sym+'</span><span class="lab">'+p.n+' / '+p.m+'</span></button>';
+  }).join('');
+  const soundText=set.sym;
+  let body='';
+  if(set.type==='words'){
+    body='<div class="pair">'+set.words.map(function(w){return card('s-'+slug(w.w),w,'',soundText);}).join('')+'</div>';
+  }else{
+    body=set.pairs.map(function(pr){
+      return '<div class="pair">'+card('s-'+slug(pr[0].w),pr[0],pr[1].w,soundText)+card('s-'+slug(pr[1].w),pr[1],pr[0].w,soundText)+'</div>';
+    }).join('');
+  }
+  return '<p class="hint">'+tx('hintSounds')+'</p>'
+   +gbar
+   +'<div class="sets" role="group">'+chips+'</div>'
+   +'<section class="panel">'
+   +'<h2>'+fm(bi(set.title))+'</h2>'
+   +'<div class="facts"><div class="fact"><h3>'+tx('why')+'</h3><p>'+fm(bi(set.why))+'</p></div><div class="fact"><h3>'+tx('tip')+'</h3><p>'+fm(bi(set.tip))+'</p></div></div>'
+   +(state.micBlocked?'<div class="banner" role="note">'+tx('blocked')+'</div>':'')
+   +body
+   +'<p class="caveat">'+tx('caveat')+'</p>'
+   +'</section>';
+}
+function abView(){
+  const rows=AB.map(function(it){
+    const key='a-'+slug(it.w);
+    const mic=state.micBlocked
+      ?'<button class="btn" type="button" data-act="upload" data-key="'+key+'">'+icon('file')+tx('upload')+'</button>'
+      :'<button class="btn say" type="button" data-act="say" data-key="'+key+'" data-w="'+it.w+'" data-p="" data-sound="" aria-pressed="false">'+icon('mic')+tx('say')+'</button>';
+    function form(a){
+      return '<div class="form '+a+'"><div><div class="tag">'+tx(a)+'</div><div class="ipa">/'+it[a]+'/</div></div>'
+       +'<button class="btn" type="button" data-act="speak" data-w="'+it.w+'" data-acc="'+a+'" data-rate="0.9" aria-label="'+tx('listen')+' – '+tx(a)+'">'+icon('speaker')+tx('listen')+'</button></div>';
+    }
+    return '<div class="ab"><div class="cardhead"><span class="w" lang="en">'+it.w+'</span></div>'
+     +'<div class="forms">'+form('uk')+form('us')+'</div>'
+     +'<p class="note"><strong>'+tx('abChange')+':</strong> '+fm(bi(it.note))+'</p>'
+     +'<div class="acts">'+mic+'<button class="btn" type="button" data-act="mine" data-key="'+key+'"'+(state.recUrls[key]?'':' hidden')+'>'+icon('play')+tx('mine')+'</button></div>'
+     +'<div class="status" id="st-'+key+'" role="status" aria-live="polite"></div></div>';
+  }).join('');
+  return '<p class="hint">'+tx('abHint')+'</p>'+(state.micBlocked?'<div class="banner" style="margin-top:12px" role="note">'+tx('blocked')+'</div>':'')+'<div class="ablist">'+rows+'</div>';
+}
+function progView(){
+  let total=0,att=0;
+  Object.keys(stats).forEach(function(k){att+=stats[k].a;if(stats[k].ok>0)total++;});
+  const rows=SETS.map(function(s,i){
+    const p=progressOf(s);
+    const pct=p.m?Math.round(100*p.n/p.m):0;
+    const g=GROUPS.find(x=>x[0]===s.group);
+    const head=(i===0||SETS[i-1].group!==s.group)?'<h3 class="ghead">'+tx(g[1])+'</h3>':'';
+    return head+'<div class="prow"><div class="head"><div class="name"><strong>'+fm(bi(s.title))+'</strong><span class="ipa">'+s.sym+'</span></div>'
+     +'<button class="btn" type="button" data-act="practice" data-v="'+s.id+'">'+tx('progPractice')+'</button></div>'
+     +'<div class="bar" role="img" aria-label="'+tx('progOf',{n:p.n,m:p.m})+'"><i style="width:'+pct+'%"></i></div>'
+     +'<div class="note">'+(p.n?tx('progOf',{n:p.n,m:p.m}):tx('progNone'))+'</div></div>';
+  }).join('');
+  return '<p class="sum">'+tx('progSum',{n:total,a:att})+'</p><div class="plist">'+rows+'</div>'
+   +'<button class="btn reset" type="button" data-act="reset" data-id="reset">'+(state.clearArmed?tx('clear2'):tx('clear'))+'</button>'
+   +'<p class="caveat" style="margin-top:10px">'+tx('progStore')+'</p>';
+}
+function refreshProgress(){
+  document.querySelectorAll('.set').forEach(function(b){
+    const s=SETS.find(x=>x.id===b.dataset.v); if(!s)return;
+    const p=progressOf(s); const l=b.querySelector('.lab'); if(l)l.textContent=p.n+' / '+p.m;
+  });
+}
+function render(){
+  const focusId=document.activeElement&&document.activeElement.getAttribute&&document.activeElement.getAttribute('data-id');
+  app.setAttribute('dir',state.lang==='ar'?'rtl':'ltr');
+  app.setAttribute('lang',state.lang);
+  app.setAttribute('data-accent',state.accent);
+  const tabs=[['sounds','tabSounds'],['ab','tabAb'],['prog','tabProg']].map(function(t){
+    return '<button class="tab" type="button" role="tab" data-act="tab" data-v="'+t[0]+'" data-id="tab-'+t[0]+'" aria-selected="'+(state.tab===t[0])+'">'+tx(t[1])+'</button>';
+  }).join('');
+  const view=state.tab==='sounds'?soundsView():(state.tab==='ab'?abView():progView());
+  app.innerHTML='<header class="top"><div class="brand"><h1>'+tx('name')+'</h1><p>'+tx('tagline')+'</p></div>'
+   +'<div class="controls"><div class="seg" role="group" aria-label="'+tx('accent')+'">'
+   +'<button type="button" data-act="accent" data-v="uk" data-id="acc-uk" aria-pressed="'+(state.accent==='uk')+'">'+tx('uk')+'</button>'
+   +'<button type="button" data-act="accent" data-v="us" data-id="acc-us" aria-pressed="'+(state.accent==='us')+'">'+tx('us')+'</button></div>'
+   +'<button class="langbtn" type="button" data-act="lang" data-id="lang" lang="'+(state.lang==='ar'?'en':'ar')+'">'+tx('langBtn')+'</button></div></header>'
+   +'<p class="voices" id="voiceInfo"></p>'
+   +'<div id="micBar" role="status" aria-live="polite"></div>'
+   +'<div class="tabs" role="tablist">'+tabs+'</div>'
+   +'<main id="view">'+view+'</main>';
+  voiceLine();
+  paintMic();
+  Object.keys(state.status).forEach(paintStatus);
+  if(focusId){const f=app.querySelector('[data-id="'+focusId+'"]');if(f)f.focus();}
+}
+
+/* ---------- Events ---------- */
+app.addEventListener('click',function(e){
+  const b=e.target.closest('[data-act]'); if(!b)return;
+  const d=b.dataset;
+  switch(d.act){
+    case 'accent': state.accent=d.v; store.set('sir.accent',d.v); stopActive(); state.status={}; render(); break;
+    case 'lang': state.lang=state.lang==='ar'?'en':'ar'; store.set('sir.lang',state.lang); stopActive(); render(); break;
+    case 'tab': state.tab=d.v; state.clearArmed=false; stopActive(); render(); break;
+    case 'group': {const f=SETS.find(x=>x.group===d.v); if(f){state.setId=f.id;store.set('sir.set',f.id);} stopActive(); render(); break;}
+    case 'set': state.setId=d.v; store.set('sir.set',d.v); stopActive(); render(); break;
+    case 'practice': state.setId=d.v; store.set('sir.set',d.v); state.tab='sounds'; render(); window.scrollTo(0,0); break;
+    case 'speak': speak(d.w,d.acc,parseFloat(d.rate)); break;
+    case 'say': startCheck(d.key,d.w,d.p,d.sound); break;
+    case 'mic': askMic(); break;
+    case 'mine': playMine(d.key); break;
+    case 'upload': uploadKey=d.key; fileIn.click(); break;
+    case 'reset':
+      if(!state.clearArmed){state.clearArmed=true;render();}
+      else{stats={};store.set('sir.stats','{}');state.clearArmed=false;render();}
+      break;
+  }
+});
+
+render();
+initMic();
+};
+</script>
+<script>
+/* Licence gate (time-limited): the key carries an expiry date and is signed for this device's code. */
+(function(){
+'use strict';
+const PUB={"kty": "EC", "crv": "P-256", "x": "x1XChzpmYebFZJd95B0xu9kn2pzbeRLPyMqx6iaUuZg", "y": "UrlwNwqZ2esaA1Oqqk4A4qKSv9hyjniEnao6rpQlka8", "ext": true, "key_ops": ["verify"]};
+const ALPHA='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const ID_RE=/^SIR-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/;
+const enc=new TextEncoder();
+const KEYSLOT='sir.key2';
+const st={get:function(k){try{return localStorage.getItem(k);}catch(e){return null;}},set:function(k,v){try{localStorage.setItem(k,v);}catch(e){}}};
+const L={
+ ar:{name:'انطقها صح',lock:'هذه النسخة تحتاج إلى تفعيل',lead:'تعمل هذه النسخة على جهاز واحد ولمدة محددة (سنة غالبًا). اتبع الخطوتين التاليتين.',
+  s1:'١. أرسل رمز جهازك إلى البائع',dev:'رمز الجهاز',copy:'نسخ',copied:'تم النسخ',wa:'إرسال عبر واتساب',
+  waMsg:'أريد تفعيل تطبيق «انطقها صح». رمز جهازي: {id}',
+  s2:'٢. الصق مفتاح التفعيل الذي وصلك',key:'مفتاح التفعيل',act:'تفعيل',
+  bad:'هذا المفتاح غير صحيح لهذا الجهاز. تأكد من لصقه كاملًا، أو اطلب من البائع مفتاحًا لهذا الرمز.',empty:'الصق مفتاح التفعيل أولًا.',
+  expired:'انتهت مدة ترخيص هذا الجهاز في {d}. للتجديد أرسل رمز الجهاز إلى البائع واطلب مفتاحًا جديدًا، ثم الصقه في الأسفل.',
+  expiredKey:'انتهت صلاحية هذا المفتاح في {d}. اطلب من البائع مفتاحًا جديدًا.',
+  insecure:'التفعيل يحتاج صفحة آمنة (https). افتح التطبيق من رابطه الآمن، وليس من ملف محفوظ على الجهاز.',
+  note:'يُحفظ التفعيل في هذا المتصفح. إن مسحتَ بيانات المتصفح أو غيّرت المتصفح فسيتغير رمز الجهاز وتحتاج إلى مفتاح جديد.',lang:'English',
+  foot:'الترخيص ساري حتى {d} (باقي {n} يومًا)',footEn:'Licence valid until {d} ({n} days left)'},
+ en:{name:'Say It Right',lock:'This copy needs activation',lead:'This copy works on one device and for a limited period (usually one year). Follow these two steps.',
+  s1:'1. Send your device code to the seller',dev:'Device code',copy:'Copy',copied:'Copied',wa:'Send by WhatsApp',
+  waMsg:'I would like to activate the “Say It Right” app. My device code: {id}',
+  s2:'2. Paste the activation key you received',key:'Activation key',act:'Activate',
+  bad:'This key is not valid for this device. Make sure you pasted all of it, or ask the seller for a key for this code.',empty:'Paste the activation key first.',
+  expired:'The licence for this device expired on {d}. To renew, send your device code to the seller, ask for a new key, and paste it below.',
+  expiredKey:'This key expired on {d}. Ask the seller for a new key.',
+  insecure:'Activation needs a secure page (https). Open the app from its secure link, not from a file saved on the device.',
+  note:'Activation is saved in this browser. If you clear the browser data or use another browser, the device code changes and you need a new key.',lang:'عربي',
+  foot:'الترخيص ساري حتى {d} (باقي {n} يومًا)',footEn:'Licence valid until {d} ({n} days left)'}
+};
+let lang=st.get('sir.lang')==='en'?'en':'ar';
+const t=function(k,v){let s=L[lang][k];if(v)for(const n in v)s=s.split('{'+n+'}').join(v[n]);return s;};
+function cookieId(){const m=document.cookie.match(/(?:^|; )sir_dev=([^;]+)/);return m?m[1]:null;}
+function getId(){
+  let id=st.get('sir.dev')||cookieId();
+  if(!id||!ID_RE.test(id)){
+    const b=new Uint8Array(12); crypto.getRandomValues(b);
+    let s=''; for(let i=0;i<12;i++)s+=ALPHA[b[i]%32];
+    id='SIR-'+s.slice(0,4)+'-'+s.slice(4,8)+'-'+s.slice(8,12);
+  }
+  st.set('sir.dev',id);
+  try{document.cookie='sir_dev='+id+'; max-age=315360000; path=/; SameSite=Lax';}catch(e){}
+  return id;
+}
+function unb64u(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const bin=atob(s),a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a;}
+/* key = YYYYMMDD "." signature ; valid through the end of that day (UTC) */
+const clean=function(s){return String(s||'').replace(/[^A-Za-z0-9_.-]/g,'');};
+function parse(key){const m=/^(\d{8})\.([A-Za-z0-9_-]+)$/.exec(key);return m?{exp:m[1],sig:m[2]}:null;}
+const endOf=function(exp){return Date.UTC(+exp.slice(0,4),+exp.slice(4,6)-1,+exp.slice(6,8),23,59,59);};
+const fmtExp=function(exp){return exp.slice(0,4)+'-'+exp.slice(4,6)+'-'+exp.slice(6,8);};
+async function verify(id,p){
+  try{
+    const sig=unb64u(p.sig); if(sig.length!==64)return false;
+    const k=await crypto.subtle.importKey('jwk',PUB,{name:'ECDSA',namedCurve:'P-256'},false,['verify']);
+    return await crypto.subtle.verify({name:'ECDSA',hash:'SHA-256'},k,sig,enc.encode('SIR2|'+id+'|'+p.exp));
+  }catch(e){return false;}
+}
+/* Time: the web server's clock when online (cannot be changed on the phone);
+   otherwise the device clock, which is not allowed to go back before the last time the app ran. */
+async function nowMs(){
+  let server=null;
+  try{
+    const c=new AbortController(); const to=setTimeout(function(){c.abort();},2500);
+    const r=await fetch(location.pathname,{method:'HEAD',cache:'no-store',signal:c.signal}); clearTimeout(to);
+    const d=r.headers.get('date'); if(d){const v=Date.parse(d); if(!isNaN(v))server=v;}
+  }catch(e){}
+  const dev=Date.now(), seen=+st.get('sir.seen')||0;
+  let n=server!==null?server:dev;
+  if(server===null&&dev<seen-86400000)n=seen;
+  if(n>seen)st.set('sir.seen',String(n));
+  return n;
+}
+
+const css=document.createElement('style');
+css.textContent='.lock{max-width:560px;margin:8vh auto 0;display:grid;gap:16px}'
+ +'.lock .box{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:10px}'
+ +'.lock h1{margin:0;font-size:28px;line-height:1.25}.lock h2{margin:0;font-size:20px}.lock h3{margin:0;font-size:17px}'
+ +'.lock p{margin:0;color:var(--muted);font-size:15px}'
+ +'.lock .code{font-family:var(--ipa);font-size:22px;font-weight:600;letter-spacing:.08em;direction:ltr;unicode-bidi:isolate;text-align:center;background:var(--surface-2);border-radius:12px;padding:12px;user-select:all;word-break:break-all}'
+ +'.lock textarea{width:100%;min-height:96px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:15px/1.5 var(--ipa);padding:10px 12px;direction:ltr;resize:vertical}'
+ +'.lock .row{display:flex;flex-wrap:wrap;gap:8px}.lock .top{display:flex;justify-content:space-between;align-items:center;gap:12px}'
+ +'.licfoot{margin:24px 0 0;font-size:13.5px;color:var(--muted);text-align:center}.licfoot.warn{color:var(--warn);font-weight:600}.licfoot span{display:block}';
+document.head.appendChild(css);
+
+function showLock(id,msgKey,msgDate){
+  const app=document.getElementById('app');
+  app.setAttribute('dir',lang==='ar'?'rtl':'ltr'); app.setAttribute('lang',lang);
+  const secure=!!(window.crypto&&crypto.subtle);
+  app.innerHTML='<div class="lock">'
+   +'<div class="top"><h1>'+t('name')+'</h1><button class="langbtn" type="button" id="lkLang">'+t('lang')+'</button></div>'
+   +'<div class="box"><h2>'+t('lock')+'</h2><p>'+t('lead')+'</p>'
+   +(msgKey==='expired'?'<div class="status bad" role="alert">'+t('expired',{d:msgDate})+'</div>':'')+'</div>'
+   +(secure?(
+    '<div class="box"><h3>'+t('s1')+'</h3><div class="code" id="lkId">'+id+'</div>'
+    +'<div class="row"><button class="btn" type="button" id="lkCopy">'+t('copy')+'</button>'
+    +'<a class="btn" id="lkWa" target="_blank" rel="noopener" style="text-decoration:none;color:inherit" href="https://wa.me/?text='+encodeURIComponent(t('waMsg').replace('{id}',id))+'">'+t('wa')+'</a></div></div>'
+    +'<div class="box"><h3>'+t('s2')+'</h3><textarea id="lkKey" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="'+t('key')+'"></textarea>'
+    +'<div class="row"><button class="btn say" type="button" id="lkGo">'+t('act')+'</button></div>'
+    +'<div class="status" id="lkSt" role="status" aria-live="polite"></div></div>'
+    +'<p>'+t('note')+'</p>'
+   ):('<div class="box"><div class="status bad" role="alert">'+t('insecure')+'</div></div>'))
+   +'</div>';
+  document.getElementById('lkLang').onclick=function(){lang=lang==='ar'?'en':'ar';st.set('sir.lang',lang);showLock(id,msgKey,msgDate);};
+  if(!secure)return;
+  const stEl=document.getElementById('lkSt');
+  function say(kind,key,v){stEl.className='status '+kind;stEl.textContent=t(key,v);}
+  document.getElementById('lkCopy').onclick=function(){
+    const b=this;
+    function done(){b.textContent=t('copied');setTimeout(function(){b.textContent=t('copy');},1500);}
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(id).then(done,function(){});}
+    else{const r=document.createRange();r.selectNodeContents(document.getElementById('lkId'));const s=getSelection();s.removeAllRanges();s.addRange(r);try{document.execCommand('copy');done();}catch(e){}}
+  };
+  document.getElementById('lkGo').onclick=async function(){
+    const key=clean(document.getElementById('lkKey').value);
+    if(!key){say('warn','empty');return;}
+    const p=parse(key);
+    if(!p||!(await verify(id,p))){say('bad','bad');return;}
+    const now=await nowMs();
+    if(now>endOf(p.exp)){say('bad','expiredKey',{d:fmtExp(p.exp)});return;}
+    st.set(KEYSLOT,key); app.innerHTML=''; start(p,now);
+  };
+}
+function start(p,now){
+  const days=Math.max(0,Math.ceil((endOf(p.exp)-now)/86400000));
+  let f=document.getElementById('licFoot');
+  if(!f){f=document.createElement('p');f.id='licFoot';document.getElementById('app').insertAdjacentElement('afterend',f);}
+  f.className='licfoot'+(days<=30?' warn':'');
+  f.innerHTML='<span dir="rtl" lang="ar">'+L.ar.foot.replace('{d}',fmtExp(p.exp)).replace('{n}',days)+'</span><span dir="ltr" lang="en">'+L.ar.footEn.replace('{d}',fmtExp(p.exp)).replace('{n}',days)+'</span>';
+  window.__startApp();
+}
+async function boot(){
+  if(!(window.crypto&&crypto.subtle)){showLock('',null);return;}
+  const id=getId(), saved=clean(st.get(KEYSLOT)), p=parse(saved);
+  if(p&&await verify(id,p)){
+    const now=await nowMs();
+    if(now<=endOf(p.exp)){start(p,now);return;}
+    showLock(id,'expired',fmtExp(p.exp));return;
+  }
+  showLock(id,null);
+}
+boot();
+})();
+
+</script>
+</body></html>
